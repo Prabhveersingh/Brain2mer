@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import time
-import tensorflow as tf
 from tensorflow.keras.models import load_model
 from PIL import Image
 
@@ -43,7 +42,6 @@ div[data-testid="stFileUploader"] {
 }
 .result-card {
     background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1));
-    border-left: 6px solid cyan;
     border-radius: 24px;
     padding: 1rem 1.5rem;
     margin-top: 1.5rem;
@@ -75,34 +73,9 @@ MODEL_PATH = "model.h5"
 
 @st.cache_resource
 def load_cnn_model():
-    try:
-        model = load_model(MODEL_PATH)
-        # Model summary dikhao
-        return model
-    except Exception as e:
-        st.error(f"Model load nahi ho raha: {e}")
-        return None
+    return load_model(MODEL_PATH)
 
 model = load_cnn_model()
-
-# Model info sidebar mein
-if model:
-    with st.sidebar:
-        st.markdown("### 🧠 Model Status")
-        st.success("✅ Model loaded successfully")
-        
-        # Check model input shape
-        input_shape = model.input_shape
-        st.write(f"Input shape: `{input_shape}`")
-        
-        # Expected preprocessing
-        st.write(f"Expected image size: `{input_shape[1]} x {input_shape[2]}`")
-        
-        # Test with dummy image
-        dummy = np.random.rand(1, IMAGE_SIZE, IMAGE_SIZE, 3)
-        dummy_pred = model.predict(dummy, verbose=0)
-        st.write(f"Test prediction shape: `{dummy_pred.shape}`")
-        st.write(f"Classes: No Tumor (index 0) | Tumor (index 1)")
 
 st.markdown('<div class="glass-card"><p class="neon-text">🧠 Brain Tumor Detection</p></div>', unsafe_allow_html=True)
 
@@ -131,28 +104,13 @@ if uploaded_file and model:
         else:
             status_text.markdown('<p style="color:lime;">🧠 Processing...</p>', unsafe_allow_html=True)
     
-    # IMPORTANT: Same preprocessing jo pehle thi
     img_resized = image.resize((IMAGE_SIZE, IMAGE_SIZE))
     img_array = np.array(img_resized) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
     
-    # Prediction
     prediction_probs = model.predict(img_array, verbose=0)[0]
-    pred_class = int(np.argmax(prediction_probs))
-    confidence = float(np.max(prediction_probs)) * 100
-    
-    # Sidebar mein raw values dikhao
-    with st.sidebar:
-        st.markdown("### 📊 Raw Prediction")
-        st.write(f"No Tumor: `{prediction_probs[0]:.6f}`")
-        st.write(f"Tumor: `{prediction_probs[1]:.6f}`")
-        st.write(f"Argmax: `{pred_class}`")
-        st.write(f"Confidence: `{confidence:.2f}%`")
-        
-        if prediction_probs[0] > prediction_probs[1]:
-            st.success("Model decision: NO TUMOR")
-        else:
-            st.error("Model decision: TUMOR")
+    tumor_prob = prediction_probs[1]
+    no_tumor_prob = prediction_probs[0]
     
     time.sleep(0.2)
     progress_bar.progress(100)
@@ -161,29 +119,45 @@ if uploaded_file and model:
     progress_bar.empty()
     status_text.empty()
     
-    if pred_class == 1:
+    # ---------- THRESHOLD LOGIC (70% for tumor, 30% for no tumor) ----------
+    if tumor_prob > 0.70:
         result_title = "⚠️ Tumor Detected"
         result_icon = "🧠⚠️"
         color = "#ff4d4d"
-    else:
+        confidence = tumor_prob * 100
+    elif no_tumor_prob > 0.70:
         result_title = "✅ No Tumor Detected"
         result_icon = "🧠✅"
         color = "#4caf50"
+        confidence = no_tumor_prob * 100
+    else:
+        result_title = "❓ Low Confidence / Needs Review"
+        result_icon = "🧠❓"
+        color = "#ffaa00"
+        confidence = max(tumor_prob, no_tumor_prob) * 100
     
     st.markdown(f"""
-    <div class="result-card" style="border-left-color: {color};">
+    <div class="result-card" style="border-left: 6px solid {color};">
         <h2 style="margin:0; color:{color};">{result_icon} {result_title}</h2>
         <hr style="background:{color}; height:2px; border:none;">
-        <p style="font-size:1.3rem; font-weight:bold;">Confidence: <span style="color:cyan;">{confidence:.2f}%</span></p>
+        <p style="font-size:1.3rem; font-weight:bold;">Confidence: <span style="color:cyan;">{confidence:.1f}%</span></p>
     </div>
     """, unsafe_allow_html=True)
-
-elif not model:
-    st.error("❌ Model file 'model.h5' nahi mil raha. Check karo file exist karti hai ya nahi.")
+    
+    # Show raw probabilities in expander (optional)
+    with st.expander("🔬 Detailed Analysis"):
+        st.write(f"📊 No Tumor Probability: `{no_tumor_prob:.4f}` ({no_tumor_prob*100:.1f}%)")
+        st.write(f"📊 Tumor Probability: `{tumor_prob:.4f}` ({tumor_prob*100:.1f}%)")
+        if tumor_prob > 0.70:
+            st.warning("⚠️ High tumor probability detected. Please consult a specialist.")
+        elif no_tumor_prob > 0.70:
+            st.success("✅ High confidence for no tumor.")
+        else:
+            st.info("ℹ️ Confidence is low. Please upload a clearer MRI image.")
 
 else:
     st.markdown("""
     <div style="text-align:center; padding:2rem; background:rgba(255,255,255,0.03); border-radius:32px;">
-        <p style="color:#aaa;">🌟 Upload MRI image</p>
+        <p style="color:#aaa;">🌟 Upload MRI image to begin scanning</p>
     </div>
     """, unsafe_allow_html=True)
