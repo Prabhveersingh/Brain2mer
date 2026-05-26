@@ -43,13 +43,20 @@ div[data-testid="stFileUploader"] {
 .result-card {
     background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1));
     border-radius: 24px;
-    padding: 1rem 1.5rem;
+    padding: 1.5rem;
     margin-top: 1.5rem;
+    text-align: center;
     animation: fadeInUp 0.6s ease-out;
 }
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
+}
+.result-tumor {
+    border-left: 6px solid #ff4d4d;
+}
+.result-normal {
+    border-left: 6px solid #4caf50;
 }
 .scan-overlay { position: relative; display: inline-block; border-radius: 20px; overflow: hidden; }
 .scan-line {
@@ -64,6 +71,10 @@ div[data-testid="stFileUploader"] {
 @keyframes scanMove {
     0% { top: 0; }
     100% { top: 100%; }
+}
+h1 {
+    font-size: 2.5rem;
+    margin: 0;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -118,30 +129,26 @@ if uploaded_file and model:
     progress_bar.empty()
     status_text.empty()
     
-    # ---------- THRESHOLD: 55% ----------
-    # Agar 55% se zyada tumor probability → Tumor, warna No Tumor
-    if tumor_prob >= 0.55:
-        result_title = "⚠️ Tumor Detected"
-        result_icon = "🧠⚠️"
-        color = "#ff4d4d"
-        confidence = tumor_prob * 100
+    # THRESHOLD 60% - Tumor tabhi jab 60% se upar
+    if tumor_prob >= 0.60:
+        st.markdown("""
+        <div class="result-card result-tumor">
+            <h1 style="color:#ff4d4d; margin:0;">🧠⚠️</h1>
+            <h1 style="color:#ff4d4d; margin:0;">Tumor Detected</h1>
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        result_title = "✅ No Tumor Detected"
-        result_icon = "🧠✅"
-        color = "#4caf50"
-        confidence = (1 - tumor_prob) * 100
-    
-    st.markdown(f"""
-    <div class="result-card" style="border-left: 6px solid {color};">
-        <h2 style="margin:0; color:{color};">{result_icon} {result_title}</h2>
-        <hr style="background:{color}; height:2px; border:none;">
-        <p style="font-size:1.3rem; font-weight:bold;">Confidence: <span style="color:cyan;">{confidence:.1f}%</span></p>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown("""
+        <div class="result-card result-normal">
+            <h1 style="color:#4caf50; margin:0;">🧠✅</h1>
+            <h1 style="color:#4caf50; margin:0;">No Tumor Detected</h1>
+        </div>
+        """, unsafe_allow_html=True)
 
 else:
     st.markdown("""
     <div style="text-align:center; padding:2rem; background:rgba(255,255,255,0.03); border-radius:32px;">
-        <p style="color:#aaa;">🌟 Upload MRI image to begin scanning</p>
+        <p style="color:#aaa;">🌟 Upload an MRI image to begin scanning</p>
+        <small style="color:#555;">JPG, PNG supported</small>
     </div>
     """, unsafe_allow_html=True)
