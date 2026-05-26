@@ -120,7 +120,7 @@ if uploaded_file and model:
     img_array = np.expand_dims(img_array, axis=0)
     
     prediction_probs = model.predict(img_array, verbose=0)[0]
-    tumor_prob = prediction_probs[1] if len(prediction_probs) > 1 else prediction_probs[0]
+    pred_class = np.argmax(prediction_probs)
     
     time.sleep(0.2)
     progress_bar.progress(100)
@@ -129,8 +129,8 @@ if uploaded_file and model:
     progress_bar.empty()
     status_text.empty()
     
-    # THRESHOLD 60% - Tumor tabhi jab 60% se upar
-    if tumor_prob >= 0.60:
+    # ORIGINAL DEFAULT LOGIC - Bilkul waise hi jaise pehle tha
+    if pred_class == 1:
         st.markdown("""
         <div class="result-card result-tumor">
             <h1 style="color:#ff4d4d; margin:0;">🧠⚠️</h1>
