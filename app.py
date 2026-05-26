@@ -1,6 +1,5 @@
 import streamlit as st
 import numpy as np
-import cv2
 import time
 from tensorflow.keras.models import load_model
 from PIL import Image
@@ -8,7 +7,7 @@ from PIL import Image
 # ---------- PAGE CONFIG ----------
 st.set_page_config(page_title="Brain Tumor Detection", page_icon="🧠", layout="wide")
 
-# ---------- 3D COLORFUL CSS ----------
+# ---------- CSS ----------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
@@ -19,19 +18,15 @@ st.markdown("""
     box-sizing: border-box;
 }
 
-/* Remove default Streamlit padding/margin from top */
+/* Remove Streamlit default header and padding */
 header {
     visibility: hidden;
     height: 0;
 }
 
-.main > div {
-    padding-top: 0rem;
-}
-
 .block-container {
-    padding-top: 1rem !important;
-    padding-bottom: 2rem !important;
+    padding-top: 0rem !important;
+    padding-bottom: 1rem !important;
 }
 
 body {
@@ -56,21 +51,16 @@ body {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(12px);
     border-radius: 32px;
-    padding: 2rem;
+    padding: 1.5rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
     margin-top: 0;
-}
-
-.glass-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 45px rgba(0, 255, 255, 0.3);
+    margin-bottom: 1rem;
 }
 
 /* Neon Glow Text */
 .neon-text {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     text-align: center;
     background: linear-gradient(135deg, #aaffff, #ff66ff);
@@ -107,8 +97,8 @@ div[data-testid="stFileUploader"]:hover {
     background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1));
     border-left: 6px solid cyan;
     border-radius: 24px;
-    padding: 1.5rem;
-    margin-top: 2rem;
+    padding: 1rem 1.5rem;
+    margin-top: 1.5rem;
     animation: fadeInUp 0.6s ease-out;
 }
 
@@ -159,13 +149,12 @@ def load_cnn_model():
 
 model = load_cnn_model()
 
-# ---------- TITLE SECTION (No empty space above) ----------
+# ---------- TITLE ----------
 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 st.markdown('<p class="neon-text">🧠 Brain Tumor Detection</p>', unsafe_allow_html=True)
-st.markdown('<p style="text-align:center; color:#ccc;">Upload MRI image • AI Analysis • 3D Scan Visual</p>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ---------- UPLOAD SECTION ----------
+# ---------- UPLOAD ----------
 uploaded_file = st.file_uploader("📤 Drop your MRI scan here", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
@@ -178,7 +167,7 @@ if uploaded_file:
         st.markdown('<div class="scan-line"></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # ---------- PROFESSIONAL SCANNING DELAY + ANIMATION ----------
+    # Scanning progress
     progress_bar = st.progress(0)
     status_text = st.empty()
     
@@ -192,7 +181,7 @@ if uploaded_file:
         else:
             status_text.markdown('<p style="color:lime;">🧠 Cross-referencing tumor patterns...</p>', unsafe_allow_html=True)
     
-    # Actual Prediction
+    # Prediction
     img_resized = image.resize((IMAGE_SIZE, IMAGE_SIZE))
     img_array = np.array(img_resized) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
@@ -201,55 +190,35 @@ if uploaded_file:
     pred_class = np.argmax(prediction_probs)
     confidence = float(np.max(prediction_probs)) * 100
     
-    # Simulate final processing
-    time.sleep(0.5)
+    time.sleep(0.3)
     progress_bar.progress(100)
     status_text.markdown('<p style="color:lime;">✅ Scan complete!</p>', unsafe_allow_html=True)
-    time.sleep(0.3)
+    time.sleep(0.2)
     progress_bar.empty()
     status_text.empty()
     
-    # ---------- RESULT WITH CONFIDENCE & SUGGESTIONS ----------
+    # Result (no advice, no download button)
     if pred_class == 1:
         result_title = "⚠️ Tumor Detected"
         result_icon = "🧠⚠️"
-        advice = "Please consult a neurologist immediately for further evaluation."
         color = "#ff4d4d"
     else:
         result_title = "✅ No Tumor Detected"
         result_icon = "🧠✅"
-        advice = "Your MRI appears normal. No immediate action needed."
         color = "#4caf50"
     
-    # Animated result card
     st.markdown(f"""
     <div class="result-card" style="border-left-color: {color};">
         <h2 style="margin:0; color:{color};">{result_icon} {result_title}</h2>
         <hr style="background:{color}; height:2px; border:none;">
         <p style="font-size:1.3rem; font-weight:bold;">Confidence Score: <span style="color:cyan;">{confidence:.2f}%</span></p>
-        <p style="color:#ddd;">📌 {advice}</p>
-        <small style="color:#aaa;">⚡ AI Neural Scanner | Real-time Analysis</small>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Download report (as requested - keep it)
-    report = f"""
-    BRAIN TUMOR DETECTION REPORT
-    ============================
-    Result: {result_title}
-    Confidence: {confidence:.2f}%
-    Advice: {advice}
-    Model: CNN (64x64)
-    Scanner Version: 1.0
-    """
-    st.download_button("📄 Download Report", report, file_name="scan_report.txt", mime="text/plain")
 
 else:
     st.markdown("""
-    <div style="text-align:center; padding:3rem; background:rgba(255,255,255,0.03); border-radius:32px;">
-        <p style="color:#aaa;">🌟 Upload an MRI image to begin 3D neural scanning</p>
-        <small style="color:#555;">Supports JPG, PNG • AI model ready</small>
+    <div style="text-align:center; padding:2rem; background:rgba(255,255,255,0.03); border-radius:32px;">
+        <p style="color:#aaa;">🌟 Upload an MRI image to begin scanning</p>
+        <small style="color:#555;">Supports JPG, PNG</small>
     </div>
     """, unsafe_allow_html=True)
-
-st.markdown("<br><small style='display:block;text-align:center;color:#666;'>🧠 Medical AI Scanner • Professional Use Only</small>", unsafe_allow_html=True)
