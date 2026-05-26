@@ -4,7 +4,6 @@ import cv2
 import time
 from tensorflow.keras.models import load_model
 from PIL import Image
-import base64
 
 # ---------- PAGE CONFIG ----------
 st.set_page_config(page_title="Brain Tumor Detection", page_icon="🧠", layout="wide")
@@ -18,6 +17,21 @@ st.markdown("""
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+/* Remove default Streamlit padding/margin from top */
+header {
+    visibility: hidden;
+    height: 0;
+}
+
+.main > div {
+    padding-top: 0rem;
+}
+
+.block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 2rem !important;
 }
 
 body {
@@ -46,6 +60,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-top: 0;
 }
 
 .glass-card:hover {
@@ -64,6 +79,7 @@ body {
     color: transparent;
     text-shadow: 0 0 10px rgba(170, 255, 255, 0.5);
     animation: pulse 2s infinite;
+    margin-top: 0;
 }
 
 @keyframes pulse {
@@ -84,19 +100,6 @@ div[data-testid="stFileUploader"]:hover {
     border-color: magenta;
     background: rgba(255,255,255,0.1);
     box-shadow: 0 0 20px cyan;
-}
-
-/* Progress Bar Custom */
-.custom-progress {
-    height: 8px;
-    background: linear-gradient(90deg, cyan, magenta);
-    border-radius: 10px;
-    animation: glow 1s infinite;
-}
-
-@keyframes glow {
-    0% { box-shadow: 0 0 5px cyan; }
-    100% { box-shadow: 0 0 20px magenta; }
 }
 
 /* Result Card */
@@ -156,7 +159,7 @@ def load_cnn_model():
 
 model = load_cnn_model()
 
-# ---------- TITLE SECTION ----------
+# ---------- TITLE SECTION (No empty space above) ----------
 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 st.markdown('<p class="neon-text">🧠 Brain Tumor Detection</p>', unsafe_allow_html=True)
 st.markdown('<p style="text-align:center; color:#ccc;">Upload MRI image • AI Analysis • 3D Scan Visual</p>', unsafe_allow_html=True)
@@ -198,7 +201,7 @@ if uploaded_file:
     pred_class = np.argmax(prediction_probs)
     confidence = float(np.max(prediction_probs)) * 100
     
-    # Simulate final processing (make it feel real)
+    # Simulate final processing
     time.sleep(0.5)
     progress_bar.progress(100)
     status_text.markdown('<p style="color:lime;">✅ Scan complete!</p>', unsafe_allow_html=True)
@@ -225,11 +228,11 @@ if uploaded_file:
         <hr style="background:{color}; height:2px; border:none;">
         <p style="font-size:1.3rem; font-weight:bold;">Confidence Score: <span style="color:cyan;">{confidence:.2f}%</span></p>
         <p style="color:#ddd;">📌 {advice}</p>
-        <small style="color:#aaa;">⚡ Powered by HeaNg[Black-Cyper] AI Engine | 3D Neural Scanner</small>
+        <small style="color:#aaa;">⚡ AI Neural Scanner | Real-time Analysis</small>
     </div>
     """, unsafe_allow_html=True)
     
-    # Extra: Download report
+    # Download report (as requested - keep it)
     report = f"""
     BRAIN TUMOR DETECTION REPORT
     ============================
@@ -237,7 +240,7 @@ if uploaded_file:
     Confidence: {confidence:.2f}%
     Advice: {advice}
     Model: CNN (64x64)
-    Scanner: HeaNg[Black-Cyber] v1.0
+    Scanner Version: 1.0
     """
     st.download_button("📄 Download Report", report, file_name="scan_report.txt", mime="text/plain")
 
@@ -249,4 +252,4 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("<br><small style='display:block;text-align:center;color:#666;'>🚀 HeaNg[Black-Cyber] System • Real-time 3D MRI Scanner • No simulation</small>", unsafe_allow_html=True)
+st.markdown("<br><small style='display:block;text-align:center;color:#666;'>🧠 Medical AI Scanner • Professional Use Only</small>", unsafe_allow_html=True)
